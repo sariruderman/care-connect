@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Phone, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import UserMenu from "@/components/user/UserMenu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,27 +36,25 @@ const Header = () => {
             </a>
           </nav>
 
-          {/* Desktop CTA */}
+          {/* Desktop CTA / User Menu */}
           <div className="hidden md:flex items-center gap-3">
             <Button variant="ghost" size="sm" className="gap-2">
               <Phone className="w-4 h-4" />
               *2580
             </Button>
-            <Button variant="outline" size="sm">
-              התחברות
-            </Button>
-            <Button onClick={() => navigate("/register")}>
-              הרשמה
-            </Button> 
+            <UserMenu />
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-foreground"
-          >
-            {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
+          <div className="md:hidden flex items-center gap-2">
+            <UserMenu />
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 text-foreground"
+            >
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -71,8 +70,6 @@ const Header = () => {
                   <Phone className="w-4 h-4" />
                   חייגו *2580
                 </Button>
-                <Button variant="outline">התחברות</Button>
-                <Button>הרשמה חינם</Button>
               </div>
             </nav>
           </div>

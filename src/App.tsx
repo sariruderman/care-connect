@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ParentRegistration from "./pages/ParentRegistration";
@@ -11,6 +12,7 @@ import BabysitterRegistration from "./pages/BabysitterRegistration";
 import ParentDashboard from "./pages/ParentDashboard";
 import BabysitterDashboard from "./pages/BabysitterDashboard";
 import RegisterSelectRole from "./pages/RegisterSelectRole";
+import Profile from "./pages/Profile";
 
 const queryClient = new QueryClient();
 
@@ -26,8 +28,30 @@ const App = () => (
             <Route path="/register" element={<RegisterSelectRole />} />
             <Route path="/register/parent" element={<ParentRegistration />} />
             <Route path="/register/babysitter" element={<BabysitterRegistration />} />
-            <Route path="/parent/dashboard" element={<ParentDashboard />} />
-            <Route path="/babysitter/dashboard" element={<BabysitterDashboard />} />
+            <Route
+              path="/parent/dashboard"
+              element={
+                <ProtectedRoute allowedTypes={["PARENT"]}>
+                  <ParentDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/babysitter/dashboard"
+              element={
+                <ProtectedRoute allowedTypes={["BABYSITTER"]}>
+                  <BabysitterDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

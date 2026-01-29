@@ -211,7 +211,7 @@ export const mockUsersApi = {
       full_name: data.full_name,
       address: data.address,
       city: data.city,
-      area: data.area,
+      area: data.neighborhood,
       children_ages: data.children_ages,
       household_notes: data.household_notes,
       community_style_id: data.community_style_id,
