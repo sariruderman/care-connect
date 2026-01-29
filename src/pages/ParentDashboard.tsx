@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,7 @@ import CreateRequestForm from '@/components/booking/CreateRequestForm';
 import RequestCard from '@/components/booking/RequestCard';
 import CandidateCard from '@/components/booking/CandidateCard';
 import type { Request, RequestCandidate, BabysitterProfile, Booking, CreateRequestData } from '@/types';
-import { Plus, RefreshCw, Phone, Clock, CheckCircle, Calendar } from 'lucide-react';
+import { Plus, RefreshCw, Phone, Clock, CheckCircle, Calendar, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 type ViewMode = 'list' | 'create' | 'details';
 
 const ParentDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, parentProfile, logout } = useAuth();
   const { toast } = useToast();
   
@@ -154,8 +156,8 @@ const ParentDashboard: React.FC = () => {
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                יציאה
+              <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+                <Home className="h-4 w-4" />
               </Button>
             </div>
           </div>

@@ -25,6 +25,20 @@ export interface CommunityStyle {
   active: boolean;
 }
 
+// Supported Languages
+export type Language = 'hebrew' | 'english' | 'russian' | 'french' | 'spanish' | 'arabic' | 'amharic' | 'yiddish';
+
+export const SUPPORTED_LANGUAGES: { value: Language; label: string }[] = [
+  { value: 'hebrew', label: 'עברית' },
+  { value: 'english', label: 'אנגלית' },
+  { value: 'russian', label: 'רוסית' },
+  { value: 'french', label: 'צרפתית' },
+  { value: 'spanish', label: 'ספרדית' },
+  { value: 'arabic', label: 'ערבית' },
+  { value: 'amharic', label: 'אמהרית' },
+  { value: 'yiddish', label: 'יידיש' },
+];
+
 // Parent Profile
 export interface ParentProfile {
   user_id: string;
@@ -35,6 +49,7 @@ export interface ParentProfile {
   children_ages: number[];
   household_notes?: string; // Additional adults, pets, etc.
   community_style_id?: string;
+  languages?: Language[];
   created_at: string;
   updated_at: string;
 }
@@ -67,6 +82,7 @@ export interface BabysitterProfile {
   rating: number;
   total_reviews: number;
   bio?: string;
+  languages?: Language[];
   created_at: string;
   updated_at: string;
 }
@@ -212,6 +228,7 @@ export interface ParentRegistrationData {
   children_ages: number[];
   household_notes?: string;
   community_style_id?: string;
+  languages?: Language[];
 }
 
 export interface BabysitterRegistrationData {
@@ -230,6 +247,7 @@ export interface BabysitterRegistrationData {
   city: string;
   neighborhood: string;
   walking_radius_minutes: number;
+  languages?: Language[];
 }
 
 export interface CreateRequestData {

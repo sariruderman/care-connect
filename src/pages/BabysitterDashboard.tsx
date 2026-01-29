@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { mockBabysitterRequestsApi, mockBookingsApi, mockStorage } from '@/services/mockApi';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RequestCandidate, Request, Booking } from '@/types';
-import { RefreshCw, Phone, Clock, CheckCircle, Calendar, MapPin, Baby, Shield, Check, X } from 'lucide-react';
+import { RefreshCw, Phone, Clock, CheckCircle, Calendar, MapPin, Baby, Shield, Check, X, Home } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +19,7 @@ interface PendingRequest {
 }
 
 const BabysitterDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, babysitterProfile, logout } = useAuth();
   const { toast } = useToast();
   
@@ -150,8 +152,8 @@ const BabysitterDashboard: React.FC = () => {
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
-              <Button variant="ghost" size="sm" onClick={logout}>
-                יציאה
+              <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+                <Home className="h-4 w-4" />
               </Button>
             </div>
           </div>
