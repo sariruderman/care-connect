@@ -40,10 +40,9 @@ const generateId = () => Math.random().toString(36).substring(2, 15);
 
 // Mock Community Styles
 const mockCommunityStyles: CommunityStyle[] = [
-  { id: '1', label: 'דתי', description: 'משפחות דתיות', active: true },
-  { id: '2', label: 'חילוני', description: 'משפחות חילוניות', active: true },
-  { id: '3', label: 'מסורתי', description: 'משפחות מסורתיות', active: true },
-  { id: '4', label: 'חרדי', description: 'משפחות חרדיות', active: true },
+  { id: '1', label: 'ספרדי', description: 'משפחות ספרדיות', active: true },
+  { id: '2', label: 'ליטאי', description: 'משפחות ליטאיות', active: true },
+  { id: '3', label: 'חסידי', description: 'משפחות חסידות', active: true },
   { id: '5', label: 'ללא העדפה', description: 'פתוח לכל הקהילות', active: true },
 ];
 

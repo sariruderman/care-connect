@@ -10,6 +10,7 @@ import ParentRegistration from "./pages/ParentRegistration";
 import BabysitterRegistration from "./pages/BabysitterRegistration";
 import ParentDashboard from "./pages/ParentDashboard";
 import BabysitterDashboard from "./pages/BabysitterDashboard";
+import RegisterSelectRole from "./pages/RegisterSelectRole";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/register" element={<RegisterSelectRole />} />
             <Route path="/register/parent" element={<ParentRegistration />} />
             <Route path="/register/babysitter" element={<BabysitterRegistration />} />
             <Route path="/parent/dashboard" element={<ParentDashboard />} />

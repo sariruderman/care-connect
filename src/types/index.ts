@@ -208,7 +208,7 @@ export interface ParentRegistrationData {
   email?: string;
   address: string;
   city: string;
-  area: string;
+  neighborhood: string;
   children_ages: number[];
   household_notes?: string;
   community_style_id?: string;
@@ -227,6 +227,9 @@ export interface BabysitterRegistrationData {
   guardian_phone?: string;
   guardian_name?: string;
   approval_mode?: ApprovalMode;
+  city: string;
+  neighborhood: string;
+  walking_radius_minutes: number;
 }
 
 export interface CreateRequestData {

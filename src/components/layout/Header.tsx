@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Phone, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <header className="fixed top-0 right-0 left-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
@@ -42,9 +44,9 @@ const Header = () => {
             <Button variant="outline" size="sm">
               התחברות
             </Button>
-            <Button size="sm">
+            <Button onClick={() => navigate("/register")}>
               הרשמה
-            </Button>
+            </Button> 
           </div>
 
           {/* Mobile Menu Button */}

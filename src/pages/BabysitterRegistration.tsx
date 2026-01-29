@@ -17,10 +17,23 @@ import { User, MapPin, Calendar, Briefcase, Shield, ArrowRight, Check, Phone } f
 
 type Step = 'phone' | 'otp' | 'profile' | 'guardian';
 
-const AREAS = [
+const CITIES = [
   'תל אביב', 'רמת גן', 'גבעתיים', 'הרצליה', 'רעננה', 'כפר סבא',
   'פתח תקווה', 'בני ברק', 'חולון', 'בת ים', 'ראשון לציון',
   'ירושלים', 'בית שמש', 'מודיעין', 'חיפה', 'נתניה', 'אשדוד', 'באר שבע'
+];
+
+const NEIGHBORHOODS_BY_CITY: Record<string, string[]> = {
+  'ירושלים': ['רמות', 'גילה', 'הר נוף', 'בית וגן', 'פסגת זאב'],
+  'בני ברק': ['פרדס כץ', 'רמת אלחנן', 'שיכון ה', 'שיכון ג'],
+  'בית שמש': ['רמת בית שמש א', 'רמת בית שמש ב', 'רמה ג'],
+};
+
+const WALKING_RADII = [
+  { label: '5 דקות הליכה', value: 5 },
+  { label: '10 דקות הליכה', value: 10 },
+  { label: '15 דקות הליכה', value: 15 },
+  { label: '20 דקות הליכה', value: 20 },
 ];
 
 const BabysitterRegistration: React.FC = () => {
@@ -37,6 +50,9 @@ const BabysitterRegistration: React.FC = () => {
     full_name: '',
     email: '',
     age: 16,
+    city: '',
+    neighborhood: '',
+    walking_radius_minutes: 5,
     service_areas: [],
     experience_years: 0,
     community_style_id: '',
@@ -116,10 +132,13 @@ const BabysitterRegistration: React.FC = () => {
     setIsLoading(false);
   };
 
-  const isProfileValid = 
+  const isProfileValid =
     formData.full_name.length >= 2 &&
-    formData.age >= 14 && formData.age <= 30 &&
-    formData.service_areas.length > 0;
+    formData.age >= 14 &&
+    formData.city &&
+    formData.neighborhood &&
+    formData.walking_radius_minutes > 0;
+
 
   const isGuardianValid = 
     formData.guardian_name!.length >= 2 &&
@@ -242,6 +261,32 @@ const BabysitterRegistration: React.FC = () => {
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
+                    עיר מגורים
+                  </Label>
+                  <Select
+                    value={formData.city}
+                    onValueChange={(value) =>
+                      setFormData(prev => ({
+                        ...prev,
+                        city: value,
+                        neighborhood: '',
+                      }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="בחרי עיר" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CITIES.map(city => (
+                        <SelectItem key={city} value={city}>{city}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
                     אזורי שירות (בחרי לפחות אחד)
                   </Label>
                   <div className="flex flex-wrap gap-2">
@@ -256,7 +301,57 @@ const BabysitterRegistration: React.FC = () => {
                       </Badge>
                     ))}
                   </div>
-                </div>
+                </div> */}
+
+                {/* Neighborhood */}
+                {formData.city && (
+                  <div className="space-y-2">
+                    <Label>שכונת מגורים</Label>
+                    <Select
+                      value={formData.neighborhood}
+                      onValueChange={(value) =>
+                        setFormData(prev => ({ ...prev, neighborhood: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="בחרי שכונה" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(NEIGHBORHOODS_BY_CITY[formData.city] || []).map(n => (
+                          <SelectItem key={n} value={n}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Walking Radius */}
+                <div className="space-y-2">
+                    <Label>מרחק הליכה מקסימלי</Label>
+                    <Select
+                      value={formData.walking_radius_minutes.toString()}
+                      onValueChange={(value) =>
+                        setFormData(prev => ({
+                          ...prev,
+                          walking_radius_minutes: parseInt(value),
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WALKING_RADII.map(r => (
+                          <SelectItem key={r.value} value={r.value.toString()}>
+                            {r.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      נשלח פניות רק ממשפחות בטווח זה
+                    </p>
+                  </div>
 
                 {/* Experience */}
                 <div className="space-y-2">
@@ -361,6 +456,7 @@ const BabysitterRegistration: React.FC = () => {
                     <li>• אזור ותאריך הבייביסיטינג</li>
                     <li>• גילאי הילדים</li>
                     <li>• האם יש מבוגר נוסף בבית</li>
+                    <li>• סגנון קהילתי</li>
                   </ul>
                   <p className="text-sm text-primary font-medium mt-2 mr-7">
                     ❌ לא יקבל פרטי קשר ישירים

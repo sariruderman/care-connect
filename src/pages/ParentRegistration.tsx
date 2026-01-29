@@ -16,11 +16,19 @@ import { User, MapPin, Baby, Home, ArrowRight, Check } from 'lucide-react';
 
 type Step = 'phone' | 'otp' | 'profile';
 
-const AREAS = [
+const CITIES = [
   'תל אביב', 'רמת גן', 'גבעתיים', 'הרצליה', 'רעננה', 'כפר סבא',
   'פתח תקווה', 'בני ברק', 'חולון', 'בת ים', 'ראשון לציון',
   'ירושלים', 'בית שמש', 'מודיעין', 'חיפה', 'נתניה', 'אשדוד', 'באר שבע'
 ];
+
+const NEIGHBORHOODS_BY_CITY: Record<string, string[]> = {
+  ירושלים: ['רמות', 'הר נוף', 'בית וגן', 'גילה', 'פסגת זאב'],
+  'בני ברק': ['רמת אלחנן', 'פרדס כץ', 'שיכון ג', 'שיכון ה'],
+  'בית שמש': ['רמה א', 'רמה ב', 'רמה ג'],
+  'פתח תקווה': ['כפר גנים', 'אם המושבות', 'מרכז העיר'],
+  'תל אביב': ['רמת אביב', 'יד אליהו', 'נווה צדק'],
+};
 
 const ParentRegistration: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +45,7 @@ const ParentRegistration: React.FC = () => {
     email: '',
     address: '',
     city: '',
-    area: '',
+    neighborhood: '',
     children_ages: [],
     household_notes: '',
     community_style_id: '',
@@ -119,7 +127,7 @@ const ParentRegistration: React.FC = () => {
     formData.full_name.length >= 2 &&
     formData.address.length >= 3 &&
     formData.city.length >= 2 &&
-    formData.area.length > 0 &&
+    formData.neighborhood.length >= 2 &&
     formData.children_ages.length > 0;
 
   return (
@@ -213,21 +221,54 @@ const ParentRegistration: React.FC = () => {
                 </div>
 
                 {/* Address & City */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city" className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      עיר
-                    </Label>
-                    <Input
-                      id="city"
-                      value={formData.city}
-                      onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                      placeholder="תל אביב"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
+                 <div>
+                               <div className="space-y-2">
+                                 <Label className="flex items-center gap-2">
+                                   <MapPin className="h-4 w-4" />
+                                   עיר מגורים
+                                 </Label>
+                                 <Select
+                                   value={formData.city}
+                                   onValueChange={(value) =>
+                                     setFormData(prev => ({
+                                       ...prev,
+                                       city: value,
+                                       neighborhood: '',
+                                     }))
+                                   }
+                                 >
+                                   <SelectTrigger>
+                                     <SelectValue placeholder="בחרי עיר" />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                     {CITIES.map(city => (
+                                       <SelectItem key={city} value={city}>{city}</SelectItem>
+                                     ))}
+                                   </SelectContent>
+                                 </Select>
+                               </div>
+
+                                {formData.city && (
+                                  <div className="space-y-2">
+                                    <Label>שכונת מגורים</Label>
+                                    <Select
+                                      value={formData.neighborhood}
+                                      onValueChange={(value) =>
+                                        setFormData(prev => ({ ...prev, neighborhood: value }))
+                                      }
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="בחרי שכונה" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {(NEIGHBORHOODS_BY_CITY[formData.city] || []).map(n => (
+                                          <SelectItem key={n} value={n}>{n}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                )}
+                       <div className="space-y-2">
                     <Label htmlFor="address">כתובת</Label>
                     <Input
                       id="address"
@@ -237,25 +278,7 @@ const ParentRegistration: React.FC = () => {
                       required
                     />
                   </div>
-                </div>
-
-                {/* Area Selection */}
-                <div className="space-y-2">
-                  <Label>אזור שירות</Label>
-                  <Select
-                    value={formData.area}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, area: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="בחרו אזור" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {AREAS.map(area => (
-                        <SelectItem key={area} value={area}>{area}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                  </div>
 
                 {/* Children Ages */}
                 <div className="space-y-2">
