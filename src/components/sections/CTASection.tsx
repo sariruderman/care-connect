@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Phone, ArrowLeft, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const CTASection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="section-padding bg-gradient-to-br from-primary via-coral-dark to-primary">
       <div className="container-narrow text-center">
@@ -20,7 +23,7 @@ const CTASection = () => {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button variant="heroOutline" size="xl" className="group">
+          <Button variant="heroOutline" size="xl" className="group" onClick={() => navigate('/register')}>
             הרשמו עכשיו — חינם
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
           </Button>

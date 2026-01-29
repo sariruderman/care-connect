@@ -11,8 +11,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { mockUsersApi, mockCommunityStylesApi } from '@/services/mockApi';
 import PhoneInput from '@/components/auth/PhoneInput';
 import OtpInput from '@/components/auth/OtpInput';
-import type { CommunityStyle, ParentRegistrationData } from '@/types';
-import { User, MapPin, Baby, Home, ArrowRight, Check } from 'lucide-react';
+import type { CommunityStyle, ParentRegistrationData, Language } from '@/types';
+import { SUPPORTED_LANGUAGES } from '@/types';
+import { User, MapPin, Baby, Home, ArrowRight, Check, Languages } from 'lucide-react';
 
 type Step = 'phone' | 'otp' | 'profile';
 
@@ -49,6 +50,7 @@ const ParentRegistration: React.FC = () => {
     children_ages: [],
     household_notes: '',
     community_style_id: '',
+    languages: ['hebrew'],
   });
   const [childAge, setChildAge] = useState('');
 
@@ -337,6 +339,35 @@ const ParentRegistration: React.FC = () => {
                   </Select>
                   <p className="text-xs text-muted-foreground">
                     משמש להתאמה עם בייביסיטריות מאותה קהילה
+                  </p>
+                </div>
+
+                {/* Languages */}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Languages className="h-4 w-4" />
+                    שפות דיבור
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {SUPPORTED_LANGUAGES.map(lang => (
+                      <Badge
+                        key={lang.value}
+                        variant={formData.languages?.includes(lang.value) ? 'default' : 'outline'}
+                        className="cursor-pointer transition-colors"
+                        onClick={() => {
+                          const current = formData.languages || [];
+                          const updated = current.includes(lang.value)
+                            ? current.filter(l => l !== lang.value)
+                            : [...current, lang.value];
+                          setFormData(prev => ({ ...prev, languages: updated }));
+                        }}
+                      >
+                        {lang.label}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    בחרו את השפות שאתם דוברים (לחצו לבחירה/ביטול)
                   </p>
                 </div>
 
