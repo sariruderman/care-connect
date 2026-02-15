@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { mockBabysitterRequestsApi, mockBookingsApi, mockStorage } from '@/services/mockApi';
+import { babysitterRequestsApi, bookingsApi } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { RequestCandidate, Request, Booking } from '@/types';
 import { RefreshCw, Phone, Clock, CheckCircle, Calendar, MapPin, Baby, Shield, Check, X, Home } from 'lucide-react';
@@ -36,19 +36,18 @@ const BabysitterDashboard: React.FC = () => {
     
     setIsRefreshing(true);
     
-    // In a real app, this would fetch from the backend
-    // For demo, we'll simulate by looking at mockStorage
-    const candidates = Array.from(mockStorage.candidates.values())
-      .filter(c => c.babysitter_id === user.id && c.response === 'PENDING');
+    const pendingResult = await babysitterRequestsApi.getPendingRequests(user.id);
+    if (pendingResult.success && pendingResult.data) {
+      // Map candidates to PendingRequest format
+      // The backend should return candidates with their associated request
+      const requestsWithDetails = (pendingResult.data as any[]).map((item: any) => ({
+        candidate: item,
+        request: item.request,
+      })).filter((r: any) => r.request);
+      setPendingRequests(requestsWithDetails);
+    }
     
-    const requestsWithDetails = candidates.map(candidate => {
-      const request = mockStorage.requests.get(candidate.request_id);
-      return { candidate, request: request! };
-    }).filter(r => r.request);
-    
-    setPendingRequests(requestsWithDetails);
-    
-    const bookingsResult = await mockBookingsApi.getBabysitterBookings(user.id);
+    const bookingsResult = await bookingsApi.getBabysitterBookings(user.id);
     if (bookingsResult.success && bookingsResult.data) {
       setBookings(bookingsResult.data);
     }
@@ -68,7 +67,7 @@ const BabysitterDashboard: React.FC = () => {
     
     setIsLoading(true);
     
-    const result = await mockBabysitterRequestsApi.acceptRequest(selectedRequest.candidate.id);
+    const result = await babysitterRequestsApi.acceptRequest(selectedRequest.candidate.id);
     
     if (result.success) {
       const hasGuardian = babysitterProfile?.guardian_required_approval;
@@ -97,7 +96,7 @@ const BabysitterDashboard: React.FC = () => {
     
     setIsLoading(true);
     
-    const result = await mockBabysitterRequestsApi.declineRequest(selectedRequest.candidate.id);
+    const result = await babysitterRequestsApi.declineRequest(selectedRequest.candidate.id);
     
     if (result.success) {
       toast({

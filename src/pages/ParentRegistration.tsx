@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockUsersApi, mockCommunityStylesApi } from '@/services/mockApi';
+import { parentsApi, communityStylesApi } from '@/services/api';
 import PhoneInput from '@/components/auth/PhoneInput';
 import OtpInput from '@/components/auth/OtpInput';
 import type { CommunityStyle, ParentRegistrationData, Language } from '@/types';
@@ -56,7 +56,7 @@ const ParentRegistration: React.FC = () => {
 
   useEffect(() => {
     // Load community styles
-    mockCommunityStylesApi.getAll().then(result => {
+    communityStylesApi.getAll().then(result => {
       if (result.success && result.data) {
         setCommunityStyles(result.data);
       }
@@ -112,7 +112,7 @@ const ParentRegistration: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await mockUsersApi.registerParent({
+    const result = await parentsApi.register({
       phone,
       ...formData,
     });
