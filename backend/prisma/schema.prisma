@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppRole {
+  PARENT
+  BABYSITTER
+  GUARDIAN
+  ADMIN
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum ApprovalMode {
+  AUTO_APPROVE
+  APPROVE_EACH_REQUEST
+  APPROVE_NEW_FAMILIES
+}
+
+enum RequestStatus {
+  NEW
+  MATCHING
+  PENDING_RESPONSES
+  PENDING_SELECTION
+  PENDING_PAYMENT
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum CandidateCallStatus {
+  PENDING
+  CALLING
+  COMPLETED
+  NO_ANSWER
+  FAILED
+}
+
+enum CandidateResponse {
+  PENDING
+  INTERESTED
+  DECLINED
+  GUARDIAN_PENDING
+  GUARDIAN_APPROVED
+  GUARDIAN_DECLINED
+}
+
+enum BookingStatus {
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+model User {
+  id         String     @id @default(uuid())
+  phone      String     @unique
+  email      String?
+  isVerified Boolean    @default(false) @map("is_verified")
+  status     UserStatus @default(PENDING)
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @updatedAt @map("updated_at")
+
+  roles             UserRole[]
+  parentProfile     ParentProfile?
+  babysitterProfile BabysitterProfile?
+  guardianProfile   GuardianProfile?
+
+  @@map("users")
+}
+
+model UserRole {
+  id     String  @id @default(uuid())
+  userId String  @map("user_id")
+  role   AppRole
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model City {
+  id            String         @id @default(uuid())
+  name          String         @unique
+  neighborhoods Neighborhood[]
+  parents       ParentProfile[]
+  babysitters   BabysitterProfile[]
+
+  @@map("cities")
+}
+
+model Neighborhood {
+  id     String @id @default(uuid())
+  name   String
+  cityId String @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id])
+
+  parents     ParentProfile[]
+  babysitters BabysitterProfile[]
+
+  @@unique([cityId, name])
+  @@map("neighborhoods")
+}
+
+model CommunityStyle {
+  id          String  @id @default(uuid())
+  label       String  @unique
+  description String?
+  active      Boolean @default(true)
+
+  parents     ParentProfile[]
+  babysitters BabysitterProfile[]
+
+  @@map("community_styles")
+}
+
+model ParentProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  fullName         String   @map("full_name")
+  address          String
+  cityId           String   @map("city_id")
+  neighborhoodId   String   @map("neighborhood_id")
+  childrenAges     Int[]    @map("children_ages")
+  householdNotes   String?  @map("household_notes")
+  communityStyleId String?  @map("community_style_id")
+  languages        String[] @default([])
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city           City            @relation(fields: [cityId], references: [id])
+  neighborhood   Neighborhood    @relation(fields: [neighborhoodId], references: [id])
+  communityStyle CommunityStyle? @relation(fields: [communityStyleId], references: [id])
+  requests       Request[]
+  bookings       Booking[]
+
+  @@map("parent_profiles")
+}
+
+model BabysitterProfile {
+  id                       String       @id @default(uuid())
+  userId                   String       @unique @map("user_id")
+  fullName                 String       @map("full_name")
+  age                      Int
+  cityId                   String       @map("city_id")
+  neighborhoodId           String       @map("neighborhood_id")
+  walkingRadiusMinutes     Int          @map("walking_radius_minutes")
+  serviceAreas             String[]     @map("service_areas")
+  availability             Json         @default("[]")
+  experienceYears          Int          @map("experience_years")
+  communityStyleId         String?      @map("community_style_id")
+  guardianId               String?      @map("guardian_id")
+  guardianRequiredApproval Boolean      @default(false) @map("guardian_required_approval")
+  approvalMode             ApprovalMode @default(APPROVE_EACH_REQUEST) @map("approval_mode")
+  rating                   Float        @default(0)
+  totalReviews             Int          @default(0) @map("total_reviews")
+  bio                      String?
+  languages                String[]     @default([])
+  createdAt                DateTime     @default(now()) @map("created_at")
+  updatedAt                DateTime     @updatedAt @map("updated_at")
+
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city           City              @relation(fields: [cityId], references: [id])
+  neighborhood   Neighborhood      @relation(fields: [neighborhoodId], references: [id])
+  communityStyle CommunityStyle?   @relation(fields: [communityStyleId], references: [id])
+  guardian       GuardianProfile?  @relation(fields: [guardianId], references: [id])
+  candidates     RequestCandidate[]
+  bookings       Booking[]
+
+  @@map("babysitter_profiles")
+}
+
+model GuardianProfile {
+  id               String   @id @default(uuid())
+  userId           String   @unique @map("user_id")
+  fullName         String   @map("full_name")
+  phone            String
+  preferredChannel String   @default("BOTH") @map("preferred_channel")
+  verified         Boolean  @default(false)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user        User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  babysitters BabysitterProfile[]
+
+  @@map("guardian_profiles")
+}
+
+model Request {
+  id               String        @id @default(uuid())
+  parentId         String        @map("parent_id")
+  datetimeStart    DateTime      @map("datetime_start")
+  datetimeEnd      DateTime      @map("datetime_end")
+  area             String
+  address          String?
+  childrenAges     Int[]         @map("children_ages")
+  requirements     String?
+  minBabysitterAge Int?          @map("min_babysitter_age")
+  maxBabysitterAge Int?          @map("max_babysitter_age")
+  communityStyleId String?       @map("community_style_id")
+  status           RequestStatus @default(NEW)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  parent     ParentProfile      @relation(fields: [parentId], references: [id])
+  candidates RequestCandidate[]
+  booking    Booking?
+
+  @@map("requests")
+}
+
+model RequestCandidate {
+  id                    String              @id @default(uuid())
+  requestId             String              @map("request_id")
+  babysitterId          String              @map("babysitter_id")
+  callStatus            CandidateCallStatus @default(PENDING) @map("call_status")
+  callAttempts          Int                 @default(0) @map("call_attempts")
+  response              CandidateResponse   @default(PENDING)
+  babysitterRespondedAt DateTime?           @map("babysitter_responded_at")
+  guardianRespondedAt   DateTime?           @map("guardian_responded_at")
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  request    Request           @relation(fields: [requestId], references: [id])
+  babysitter BabysitterProfile @relation(fields: [babysitterId], references: [id])
+
+  @@unique([requestId, babysitterId])
+  @@map("request_candidates")
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  requestId        String        @unique @map("request_id")
+  parentId         String        @map("parent_id")
+  babysitterId     String        @map("babysitter_id")
+  datetimeStart    DateTime      @map("datetime_start")
+  datetimeEnd      DateTime      @map("datetime_end")
+  address          String
+  status           BookingStatus @default(CONFIRMED)
+  paymentStatus    PaymentStatus @default(PENDING) @map("payment_status")
+  paymentAmount    Decimal?      @map("payment_amount") @db.Decimal(10, 2)
+  confirmedAt      DateTime      @default(now()) @map("confirmed_at")
+  startedAt        DateTime?     @map("started_at")
+  completedAt      DateTime?     @map("completed_at")
+  parentRating     Int?          @map("parent_rating")
+  parentReview     String?       @map("parent_review")
+  babysitterRating Int?          @map("babysitter_rating")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  request    Request           @relation(fields: [requestId], references: [id])
+  parent     ParentProfile     @relation(fields: [parentId], references: [id])
+  babysitter BabysitterProfile @relation(fields: [babysitterId], references: [id])
+
+  @@map("bookings")
+}
+
+model OtpVerification {
+  id        String   @id @default(uuid())
+  phone     String
+  code      String
+  expiresAt DateTime @map("expires_at")
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([phone, code])
+  @@map("otp_verifications")
+}
+
+model TelephonySession {
+  id          String   @id @default(uuid())
+  callId      String   @unique @map("call_id")
+  phone       String
+  sessionData Json     @default("{}") @map("session_data")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("telephony_sessions")
+}
