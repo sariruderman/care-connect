@@ -18,22 +18,60 @@ export class AuthService {
     return { success: true, data: { expires_in: 300 } };
   }
 
-  async verifyOtp(phone: string, code: string) {
-    const valid = await this.otpService.verifyOtp(phone, code);
-    if (!valid) throw new UnauthorizedException('Invalid or expired OTP');
+//   async verifyOtp(phone: string, code: string) {
+//     const valid = await this.otpService.verifyOtp(phone, code);
+//     if (!valid) throw new UnauthorizedException('Invalid or expired OTP');
     
-    let user = await this.prisma.user.findUnique({ 
-      where: { phone },
-      include: { roles: true }
-    });
+//     // let user = await this.prisma.user.findUnique({ 
+//     //   where: { phone },
+//     //   include: { roles: true }
+//     // });
+//     let user = await this.prisma.user.findUnique({ 
+//   where: { phone },
+//   select: {
+//     id: true,
+//     phone: true,
+//     email: true,
+//     status: true,
+//     isVerified: true,
+//     roles: {
+//       select: {
+//         role: true
+//       }
+//     }
+//   }
+// });
     
-    if (!user) {
-      throw new UnauthorizedException('User not found. Please register.');
-    }
+//     if (!user) {
+//       throw new UnauthorizedException('User not found. Please register.');
+//     }
     
-    const roles = user.roles.map(r => r.role);
-    const token = this.jwtService.sign({ userId: user.id, roles });
+//     // const roles = user.roles.map(r => r.role);
+//     const roles = user.roles.map(r => r.role);
+//     const token = this.jwtService.sign({ userId: user.id, roles });
     
-    return { success: true, data: { token, user } };
+//     return { success: true, data: { token, user } };
+//   }
+async verifyOtp(phone: string, code: string) {
+  const valid = await this.otpService.verifyOtp(phone, code);
+  if (!valid) throw new UnauthorizedException('Invalid or expired OTP');
+  
+  const user = await this.prisma.user.findUnique({ 
+    where: { phone }
+  });
+  
+  if (!user) {
+    throw new UnauthorizedException('User not found. Please register.');
   }
+  
+  const userRoles = await this.prisma.userRole.findMany({
+    where: { userId: user.id },
+    select: { role: true }
+  });
+  
+  const roles = userRoles.map(r => r.role);
+  const token = this.jwtService.sign({ userId: user.id, roles });
+  
+  return { success: true, data: { token, user } };
+}
 }

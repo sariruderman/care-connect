@@ -13,15 +13,15 @@ interface CreateGuardianRequest extends CreateGuardianDto {
 export class GuardiansController {
   constructor(private readonly guardiansService: GuardiansService) {}
 
-  // @Post()
-  // async create(@Body() dto: CreateGuardianRequest) {
-  //   return await this.guardiansService.create(dto);
-  // }
+  @Post()
+  async create(@Body() dto: CreateGuardianRequest) {
+    return await this.guardiansService.create(dto);
+  }
 
-@Post()
-async create(@Body() dto: CreateGuardianDto) {
-  return await this.guardiansService.create(dto);
-}
+// @Post()
+// async create(@Body() dto: CreateGuardianDto) {
+//   return await this.guardiansService.create(dto);
+// }
 
   @Get()
   async findAll() {
