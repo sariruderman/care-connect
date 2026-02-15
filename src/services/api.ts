@@ -1,7 +1,6 @@
 // ============================================
-// API Service Layer - Decoupled Backend Integration
-// Replace BASE_URL with your actual backend URL
-// All business logic resides in the backend
+// API Service Layer - Backend Integration
+// Connects to NestJS backend at /api prefix
 // ============================================
 
 import type {
@@ -20,9 +19,9 @@ import type {
   CreateRequestData,
 } from '@/types';
 
-// Configuration - Replace with environment variable in production
+// Configuration
 const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001/api',
+  BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
   TIMEOUT: 30000,
 };
 
@@ -43,6 +42,10 @@ class ApiClient {
     } else {
       localStorage.removeItem('auth_token');
     }
+  }
+
+  getToken() {
+    return this.token;
   }
 
   private async request<T>(
@@ -68,8 +71,13 @@ class ApiClient {
       if (!response.ok) {
         return {
           success: false,
-          error: data.error || `HTTP ${response.status}`,
+          error: data.message || data.error || `HTTP ${response.status}`,
         };
+      }
+
+      // Backend may return { success, data } or raw data
+      if (data.success !== undefined) {
+        return data;
       }
 
       return { success: true, data };
@@ -86,10 +94,10 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  post<T>(endpoint: string, body: unknown) {
+  post<T>(endpoint: string, body?: unknown) {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: body ? JSON.stringify(body) : undefined,
     });
   }
 
@@ -115,208 +123,216 @@ class ApiClient {
 const client = new ApiClient(API_CONFIG.BASE_URL);
 
 // ============================================
-// Auth API
+// Auth API - matches backend/src/auth/auth.controller.ts
+// POST /auth/send-otp
+// POST /auth/verify-otp
 // ============================================
 export const authApi = {
-  // Send OTP to phone number
   sendOtp: (phone: string) =>
     client.post<{ expires_in: number }>('/auth/send-otp', { phone }),
 
-  // Verify OTP and get token
   verifyOtp: (phone: string, code: string) =>
     client.post<{ token: string; user: User }>('/auth/verify-otp', { phone, code }),
 
-  // Get current user
   getCurrentUser: () => client.get<User>('/auth/me'),
 
-  // Logout
   logout: () => {
     client.setToken(null);
-    return Promise.resolve({ success: true });
+    return Promise.resolve({ success: true as const });
   },
 
-  // Set token (after login)
   setToken: (token: string) => client.setToken(token),
 };
 
 // ============================================
-// Users API
+// Parents API - matches backend/src/parents/parents.controller.ts
+// POST /parents/register
+// GET /parents
+// GET /parents/:id
+// GET /parents/user/:userId
+// PATCH /parents/:id
+// DELETE /parents/:id
 // ============================================
-export const usersApi = {
-  // Register parent
-  registerParent: (data: ParentRegistrationData) =>
-    client.post<{ user: User; profile: ParentProfile }>('/users/register/parent', data),
-
-  // Register babysitter
-  registerBabysitter: (data: BabysitterRegistrationData) =>
-    client.post<{ user: User; profile: BabysitterProfile }>('/users/register/babysitter', data),
-
-  // Get parent profile
-  getParentProfile: (userId: string) =>
-    client.get<ParentProfile>(`/users/parent/${userId}`),
-
-  // Get babysitter profile
-  getBabysitterProfile: (userId: string) =>
-    client.get<BabysitterProfile>(`/users/babysitter/${userId}`),
-
-  // Update parent profile
-  updateParentProfile: (userId: string, data: Partial<ParentProfile>) =>
-    client.put<ParentProfile>(`/users/parent/${userId}`, data),
-
-  // Update babysitter profile
-  updateBabysitterProfile: (userId: string, data: Partial<BabysitterProfile>) =>
-    client.put<BabysitterProfile>(`/users/babysitter/${userId}`, data),
-};
-
-// ============================================
-// Guardian API
-// ============================================
-export const guardianApi = {
-  // Link guardian to babysitter
-  linkGuardian: (babysitterId: string, guardianPhone: string, guardianName: string) =>
-    client.post<Guardian>('/guardians/link', {
-      babysitter_id: babysitterId,
-      phone: guardianPhone,
-      name: guardianName,
+export const parentsApi = {
+  register: (data: ParentRegistrationData) =>
+    client.post<{ user: User; profile: ParentProfile }>('/parents/register', {
+      phone: data.phone,
+      fullName: data.full_name,
+      email: data.email,
+      address: data.address,
+      city: data.city,
+      neighborhood: data.neighborhood,
+      childrenAges: data.children_ages,
+      householdNotes: data.household_notes,
+      communityStyleId: data.community_style_id,
+      languages: data.languages,
     }),
 
-  // Verify guardian (called after guardian confirms via phone/OTP)
-  verifyGuardian: (guardianId: string, code: string) =>
-    client.post<Guardian>(`/guardians/${guardianId}/verify`, { code }),
+  getAll: () => client.get<ParentProfile[]>('/parents'),
 
-  // Get guardian for babysitter
-  getGuardian: (babysitterId: string) =>
-    client.get<Guardian>(`/guardians/babysitter/${babysitterId}`),
+  getById: (id: string) => client.get<ParentProfile>(`/parents/${id}`),
 
-  // Guardian approves a request
-  approveRequest: (guardianId: string, candidateId: string) =>
-    client.post<RequestCandidate>(`/guardians/${guardianId}/approve/${candidateId}`, {}),
+  getByUserId: (userId: string) => client.get<ParentProfile>(`/parents/user/${userId}`),
 
-  // Guardian declines a request
-  declineRequest: (guardianId: string, candidateId: string) =>
-    client.post<RequestCandidate>(`/guardians/${guardianId}/decline/${candidateId}`, {}),
+  update: (id: string, data: Partial<ParentProfile>) =>
+    client.patch<ParentProfile>(`/parents/${id}`, data),
+
+  remove: (id: string) => client.delete(`/parents/${id}`),
 };
 
 // ============================================
-// Community Styles API
+// Babysitters API - matches backend/src/babysitters/babysitters.controller.ts
+// POST /babysitters/register
+// GET /babysitters
+// GET /babysitters/:id
+// GET /babysitters/user/:userId
+// PATCH /babysitters/:id
+// DELETE /babysitters/:id
+// ============================================
+export const babysittersApi = {
+  register: (data: BabysitterRegistrationData) =>
+    client.post<{ user: User; profile: BabysitterProfile }>('/babysitters/register', {
+      phone: data.phone,
+      fullName: data.full_name,
+      email: data.email,
+      age: data.age,
+      city: data.city,
+      neighborhood: data.neighborhood,
+      walkingRadiusMinutes: data.walking_radius_minutes,
+      serviceAreas: data.service_areas,
+      experienceYears: data.experience_years,
+      communityStyleId: data.community_style_id,
+      bio: data.bio,
+      hasGuardian: data.has_guardian,
+      guardianPhone: data.guardian_phone,
+      guardianName: data.guardian_name,
+      approvalMode: data.approval_mode,
+      languages: data.languages,
+    }),
+
+  getAll: () => client.get<BabysitterProfile[]>('/babysitters'),
+
+  getById: (id: string) => client.get<BabysitterProfile>(`/babysitters/${id}`),
+
+  getByUserId: (userId: string) => client.get<BabysitterProfile>(`/babysitters/user/${userId}`),
+
+  update: (id: string, data: Partial<BabysitterProfile>) =>
+    client.patch<BabysitterProfile>(`/babysitters/${id}`, data),
+
+  remove: (id: string) => client.delete(`/babysitters/${id}`),
+};
+
+// ============================================
+// Guardians API - matches backend/src/guardians/guardians.controller.ts
+// ============================================
+export const guardianApi = {
+  create: (data: { userId: string; babysitterId?: string; fullName: string; phone: string }) =>
+    client.post<Guardian>('/guardians', data),
+
+  getAll: () => client.get<Guardian[]>('/guardians'),
+
+  getById: (id: string) => client.get<Guardian>(`/guardians/${id}`),
+
+  update: (id: string, data: Partial<Guardian>) =>
+    client.patch<Guardian>(`/guardians/${id}`, data),
+
+  remove: (id: string) => client.delete(`/guardians/${id}`),
+};
+
+// ============================================
+// Community Styles API - matches backend/src/community-styles/community-styles.controller.ts
+// GET /community-styles
+// GET /community-styles/:id
 // ============================================
 export const communityStylesApi = {
-  // Get all active community styles
   getAll: () => client.get<CommunityStyle[]>('/community-styles'),
 
-  // Get single community style
   getById: (id: string) => client.get<CommunityStyle>(`/community-styles/${id}`),
 };
 
 // ============================================
-// Requests API (Job postings)
+// Cities API - matches backend/src/city/city.controller.ts
+// GET /cities
+// GET /cities/:id
+// ============================================
+export const citiesApi = {
+  getAll: () => client.get<{ id: string; name: string }[]>('/cities'),
+
+  getById: (id: string) => client.get<{ id: string; name: string }>(`/cities/${id}`),
+};
+
+// ============================================
+// Jobs/Requests API - matches backend/src/jobs/jobs.controller.ts
+// POST /jobs
+// GET /jobs
+// GET /jobs/:id
+// PATCH /jobs/:id
+// DELETE /jobs/:id
 // ============================================
 export const requestsApi = {
-  // Create new request
   create: (data: CreateRequestData) =>
-    client.post<Request>('/requests', data),
+    client.post<Request>('/jobs', data),
 
-  // Get request by ID
-  getById: (id: string) => client.get<Request>(`/requests/${id}`),
+  getById: (id: string) => client.get<Request>(`/jobs/${id}`),
 
-  // Get requests for parent
-  getParentRequests: (parentId: string, page = 1, perPage = 10) =>
-    client.get<PaginatedResponse<Request>>(
-      `/requests/parent/${parentId}?page=${page}&per_page=${perPage}`
-    ),
+  getAll: () => client.get<Request[]>('/jobs'),
 
-  // Get candidates for request (parent view)
+  getParentRequests: (parentId: string) =>
+    client.get<Request[]>(`/jobs?parentId=${parentId}`),
+
   getCandidates: (requestId: string) =>
-    client.get<RequestCandidate[]>(`/requests/${requestId}/candidates`),
+    client.get<(RequestCandidate & { babysitter: BabysitterProfile })[]>(`/jobs/${requestId}/candidates`),
 
-  // Select babysitter (parent chooses)
   selectBabysitter: (requestId: string, babysitterId: string) =>
-    client.post<Booking>(`/requests/${requestId}/select`, { babysitter_id: babysitterId }),
+    client.post<Booking>(`/jobs/${requestId}/select`, { babysitter_id: babysitterId }),
 
-  // Cancel request
   cancel: (requestId: string) =>
-    client.post<Request>(`/requests/${requestId}/cancel`, {}),
+    client.post<Request>(`/jobs/${requestId}/cancel`, {}),
 };
 
 // ============================================
 // Babysitter Requests API
 // ============================================
 export const babysitterRequestsApi = {
-  // Get pending requests for babysitter
   getPendingRequests: (babysitterId: string) =>
-    client.get<RequestCandidate[]>(`/babysitter/${babysitterId}/pending-requests`),
+    client.get<RequestCandidate[]>(`/babysitters/${babysitterId}/pending-requests`),
 
-  // Babysitter accepts request
   acceptRequest: (candidateId: string) =>
-    client.post<RequestCandidate>(`/babysitter/requests/${candidateId}/accept`, {}),
+    client.post<RequestCandidate>(`/babysitters/requests/${candidateId}/accept`, {}),
 
-  // Babysitter declines request
   declineRequest: (candidateId: string) =>
-    client.post<RequestCandidate>(`/babysitter/requests/${candidateId}/decline`, {}),
-
-  // Get babysitter's upcoming bookings
-  getUpcomingBookings: (babysitterId: string) =>
-    client.get<Booking[]>(`/babysitter/${babysitterId}/bookings/upcoming`),
+    client.post<RequestCandidate>(`/babysitters/requests/${candidateId}/decline`, {}),
 };
 
 // ============================================
-// Bookings API
+// Bookings API - matches backend/src/bookings/bookings.controller.ts
 // ============================================
 export const bookingsApi = {
-  // Get booking by ID
   getById: (id: string) => client.get<Booking>(`/bookings/${id}`),
 
-  // Get parent's bookings
-  getParentBookings: (parentId: string, page = 1, perPage = 10) =>
-    client.get<PaginatedResponse<Booking>>(
-      `/bookings/parent/${parentId}?page=${page}&per_page=${perPage}`
-    ),
+  getParentBookings: (parentId: string) =>
+    client.get<Booking[]>(`/bookings?parentId=${parentId}`),
 
-  // Get babysitter's bookings
-  getBabysitterBookings: (babysitterId: string, page = 1, perPage = 10) =>
-    client.get<PaginatedResponse<Booking>>(
-      `/bookings/babysitter/${babysitterId}?page=${page}&per_page=${perPage}`
-    ),
+  getBabysitterBookings: (babysitterId: string) =>
+    client.get<Booking[]>(`/bookings?babysitterId=${babysitterId}`),
 
-  // Start booking (babysitter arrived)
   startBooking: (bookingId: string) =>
     client.post<Booking>(`/bookings/${bookingId}/start`, {}),
 
-  // Complete booking
   completeBooking: (bookingId: string) =>
     client.post<Booking>(`/bookings/${bookingId}/complete`, {}),
 
-  // Cancel booking
   cancelBooking: (bookingId: string, reason: string) =>
     client.post<Booking>(`/bookings/${bookingId}/cancel`, { reason }),
-
-  // Add rating (parent rates babysitter)
-  addParentRating: (bookingId: string, rating: number, review?: string) =>
-    client.post<Booking>(`/bookings/${bookingId}/rate`, { rating, review }),
 };
 
 // ============================================
-// Matching API
-// ============================================
-export const matchingApi = {
-  // Trigger matching for a request
-  findCandidates: (requestId: string) =>
-    client.post<{ candidates_count: number }>(`/matching/find/${requestId}`, {}),
-
-  // Get matching preferences
-  getPreferences: () => client.get<{ areas: string[]; age_range: { min: number; max: number } }>('/matching/preferences'),
-};
-
-// ============================================
-// Telephony Webhook Endpoints (Backend receives these)
-// Frontend can check status
+// Telephony API
 // ============================================
 export const telephonyApi = {
-  // Get call status for a candidate
   getCallStatus: (candidateId: string) =>
     client.get<{ status: string; attempts: number }>(`/telephony/call-status/${candidateId}`),
 
-  // Retry call to candidate
   retryCall: (candidateId: string) =>
     client.post<{ success: boolean }>(`/telephony/retry/${candidateId}`, {}),
 };

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { mockRequestsApi, mockBookingsApi } from '@/services/mockApi';
+import { requestsApi, bookingsApi } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import CreateRequestForm from '@/components/booking/CreateRequestForm';
 import RequestCard from '@/components/booking/RequestCard';
@@ -39,8 +39,8 @@ const ParentDashboard: React.FC = () => {
     setIsRefreshing(true);
     
     const [requestsResult, bookingsResult] = await Promise.all([
-      mockRequestsApi.getParentRequests(user.id),
-      mockBookingsApi.getParentBookings(user.id),
+      requestsApi.getParentRequests(user.id),
+      bookingsApi.getParentBookings(user.id),
     ]);
     
     if (requestsResult.success && requestsResult.data) {
@@ -59,7 +59,7 @@ const ParentDashboard: React.FC = () => {
   }, [loadData]);
 
   const loadCandidates = async (requestId: string) => {
-    const result = await mockRequestsApi.getCandidates(requestId);
+    const result = await requestsApi.getCandidates(requestId);
     if (result.success && result.data) {
       setCandidates(result.data);
     }
@@ -74,7 +74,7 @@ const ParentDashboard: React.FC = () => {
   const handleCreateRequest = async (data: CreateRequestData) => {
     setIsLoading(true);
     
-    const result = await mockRequestsApi.create(data);
+    const result = await requestsApi.create(data);
     
     if (result.success && result.data) {
       toast({
@@ -104,7 +104,7 @@ const ParentDashboard: React.FC = () => {
     
     setIsLoading(true);
     
-    const result = await mockRequestsApi.selectBabysitter(selectedRequest.id, selectedBabysitter);
+    const result = await requestsApi.selectBabysitter(selectedRequest.id, selectedBabysitter);
     
     if (result.success) {
       toast({

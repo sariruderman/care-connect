@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockUsersApi, mockCommunityStylesApi } from '@/services/mockApi';
+import { babysittersApi, communityStylesApi } from '@/services/api';
 import PhoneInput from '@/components/auth/PhoneInput';
 import OtpInput from '@/components/auth/OtpInput';
 import type { CommunityStyle, BabysitterRegistrationData, ApprovalMode, Language } from '@/types';
@@ -67,7 +67,7 @@ const BabysitterRegistration: React.FC = () => {
 
   useEffect(() => {
     // Load community styles
-    mockCommunityStylesApi.getAll().then(result => {
+    communityStylesApi.getAll().then(result => {
       if (result.success && result.data) {
         setCommunityStyles(result.data);
       }
@@ -121,7 +121,7 @@ const BabysitterRegistration: React.FC = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    const result = await mockUsersApi.registerBabysitter({
+    const result = await babysittersApi.register({
       phone,
       ...formData,
     });

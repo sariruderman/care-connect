@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { mockCommunityStylesApi } from '@/services/mockApi';
+import { communityStylesApi } from '@/services/api';
 import type { CommunityStyle, CreateRequestData } from '@/types';
 import { Calendar as CalendarIcon, Clock, MapPin, Baby, Filter, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -58,7 +58,7 @@ const CreateRequestForm: React.FC<CreateRequestFormProps> = ({
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    mockCommunityStylesApi.getAll().then(result => {
+    communityStylesApi.getAll().then(result => {
       if (result.success && result.data) {
         setCommunityStyles(result.data);
       }

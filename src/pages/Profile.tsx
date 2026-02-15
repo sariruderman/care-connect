@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { parentsApi, babysittersApi } from '@/services/api';
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,7 @@ const Profile = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // In production, this would call the API to update the profile
+    // TODO: Call real update API when backend supports it
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     toast({

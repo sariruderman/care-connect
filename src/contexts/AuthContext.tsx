@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import type { User, ParentProfile, BabysitterProfile } from '@/types';
-import { mockAuthApi, mockUsersApi } from '@/services/mockApi';
+import { authApi, parentsApi, babysittersApi } from '@/services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -29,17 +29,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       const token = localStorage.getItem('auth_token');
       if (token) {
-        const result = await mockAuthApi.getCurrentUser();
+        authApi.setToken(token);
+        const result = await authApi.getCurrentUser();
         if (result.success && result.data) {
           setUser(result.data);
           // Load profile based on user type
           if (result.data.type === 'PARENT') {
-            const profileResult = await mockUsersApi.getParentProfile(result.data.id);
+            const profileResult = await parentsApi.getByUserId(result.data.id);
             if (profileResult.success && profileResult.data) {
               setParentProfile(profileResult.data);
             }
           } else if (result.data.type === 'BABYSITTER') {
-            const profileResult = await mockUsersApi.getBabysitterProfile(result.data.id);
+            const profileResult = await babysittersApi.getByUserId(result.data.id);
             if (profileResult.success && profileResult.data) {
               setBabysitterProfile(profileResult.data);
             }
@@ -52,14 +53,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const sendOtp = useCallback(async (phone: string) => {
-    const result = await mockAuthApi.sendOtp(phone);
+    const result = await authApi.sendOtp(phone);
     return { success: result.success, error: result.error };
   }, []);
 
   const verifyOtp = useCallback(async (phone: string, code: string) => {
-    const result = await mockAuthApi.verifyOtp(phone, code);
+    const result = await authApi.verifyOtp(phone, code);
     if (result.success && result.data) {
-      localStorage.setItem('auth_token', result.data.token);
+      authApi.setToken(result.data.token);
       setUser(result.data.user);
       return { success: true };
     }
@@ -67,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('auth_token');
+    authApi.logout();
     setUser(null);
     setParentProfile(null);
     setBabysitterProfile(null);
@@ -77,12 +78,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return;
     
     if (user.type === 'PARENT') {
-      const result = await mockUsersApi.getParentProfile(user.id);
+      const result = await parentsApi.getByUserId(user.id);
       if (result.success && result.data) {
         setParentProfile(result.data);
       }
     } else if (user.type === 'BABYSITTER') {
-      const result = await mockUsersApi.getBabysitterProfile(user.id);
+      const result = await babysittersApi.getByUserId(user.id);
       if (result.success && result.data) {
         setBabysitterProfile(result.data);
       }
