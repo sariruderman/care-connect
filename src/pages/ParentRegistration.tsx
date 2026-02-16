@@ -14,6 +14,7 @@ import OtpInput from '@/components/auth/OtpInput';
 import type { CommunityStyle, ParentRegistrationData, Language } from '@/types';
 import { SUPPORTED_LANGUAGES } from '@/types';
 import { User, MapPin, Baby, Home, ArrowRight, Check, Languages } from 'lucide-react';
+import { tr } from 'date-fns/locale';
 
 type Step = 'phone' | 'otp' | 'profile';
 
@@ -82,9 +83,20 @@ const ParentRegistration: React.FC = () => {
     if (result.success) {
       setStep('profile');
     }
-    
-    return result;
-  };
+       if (user?.roles?.includes('PARENT')) {
+      const profileResult = await parentsApi.getByUserId(user.id);
+      if (profileResult.success && profileResult.data) {
+        // יש פרופיל - לך ל-dashboard
+        navigate('/parent/dashboard');
+        return result;
+      }
+    }
+    // אין פרופיל - המשך למילוי פרטים
+    setStep('profile');
+  
+  
+  return result;
+};
 
   const handleResendOtp = async () => {
     await sendOtp(phone);

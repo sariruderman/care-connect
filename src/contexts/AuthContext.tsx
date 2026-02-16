@@ -25,32 +25,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing session on mount
+  // useEffect(() => {
+  //   const checkAuth = async () => {
+  //     const token = localStorage.getItem('auth_token');
+  //     if (token) {
+  //       authApi.setToken(token);
+  //       const result = await authApi.getCurrentUser();
+  //       if (result.success && result.data) {
+  //         setUser(result.data);
+  //         // Load profile based on user type
+  //         if (result.data.type === 'PARENT') {
+  //           const profileResult = await parentsApi.getByUserId(result.data.id);
+  //           if (profileResult.success && profileResult.data) {
+  //             setParentProfile(profileResult.data);
+  //           }
+  //         } else if (result.data.type === 'BABYSITTER') {
+  //           const profileResult = await babysittersApi.getByUserId(result.data.id);
+  //           if (profileResult.success && profileResult.data) {
+  //             setBabysitterProfile(profileResult.data);
+  //           }
+  //         }
+  //       }
+  //     }
+  //     setIsLoading(false);
+  //   };
+  //   checkAuth();
+  // }, []);
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        authApi.setToken(token);
+  const checkAuth = async () => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      authApi.setToken(token);
+      try {
         const result = await authApi.getCurrentUser();
         if (result.success && result.data) {
           setUser(result.data);
-          // Load profile based on user type
-          if (result.data.type === 'PARENT') {
+          // Load profile based on user roles
+          const userRoles = result.data.roles || [];
+          
+          if (userRoles.includes('PARENT')) {
             const profileResult = await parentsApi.getByUserId(result.data.id);
             if (profileResult.success && profileResult.data) {
               setParentProfile(profileResult.data);
             }
-          } else if (result.data.type === 'BABYSITTER') {
+          }
+          
+          if (userRoles.includes('BABYSITTER')) {
             const profileResult = await babysittersApi.getByUserId(result.data.id);
             if (profileResult.success && profileResult.data) {
               setBabysitterProfile(profileResult.data);
             }
           }
         }
+      } catch (error) {
+        // Token invalid, clear it
+        authApi.logout();
       }
-      setIsLoading(false);
-    };
-    checkAuth();
-  }, []);
+    }
+    setIsLoading(false);
+  };
+  checkAuth();
+}, []);
 
   const sendOtp = useCallback(async (phone: string) => {
     const result = await authApi.sendOtp(phone);
@@ -76,13 +111,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = useCallback(async () => {
     if (!user) return;
-    
-    if (user.type === 'PARENT') {
+
+    if (user.roles.includes('PARENT')) {
       const result = await parentsApi.getByUserId(user.id);
       if (result.success && result.data) {
         setParentProfile(result.data);
       }
-    } else if (user.type === 'BABYSITTER') {
+    } else if (user.roles.includes('BABYSITTER')) {
       const result = await babysittersApi.getByUserId(user.id);
       if (result.success && result.data) {
         setBabysitterProfile(result.data);

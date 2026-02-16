@@ -24,9 +24,9 @@ const ProtectedRoute = ({ children, allowedTypes }: ProtectedRouteProps) => {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  if (allowedTypes && user && !allowedTypes.includes(user.type)) {
+  if (allowedTypes && user && !allowedTypes.includes(user.roles[0] as UserType)) {
     // Redirect to appropriate dashboard based on user type
-    const redirectPath = user.type === "BABYSITTER" ? "/babysitter/dashboard" : "/parent/dashboard";
+    const redirectPath = user.roles[0] === "BABYSITTER" ? "/babysitter/dashboard" : "/parent/dashboard";
     return <Navigate to={redirectPath} replace />;
   }
 

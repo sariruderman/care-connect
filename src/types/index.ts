@@ -9,9 +9,9 @@ export type UserStatus = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DELETED';
 
 export interface User {
   id: string;
-  type: UserType;
   phone: string;
   email?: string;
+  roles: string[];
   status: UserStatus;
   created_at: string;
   updated_at: string;
