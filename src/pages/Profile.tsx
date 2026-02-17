@@ -18,7 +18,7 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const profile = parentProfile || babysitterProfile;
-  const isParent = user?.type === "PARENT";
+  const isParent = !!parentProfile;
 
   const [formData, setFormData] = useState({
     full_name: "",
@@ -37,8 +37,8 @@ const Profile = () => {
         full_name: parentProfile.full_name || "",
         email: user?.email || "",
         address: parentProfile.address || "",
-        city: parentProfile.city || "",
-        neighborhood: parentProfile.area || "",
+        city: parentProfile.city?.name || "",
+        neighborhood: parentProfile.neighborhood?.name || "",
         children_ages: parentProfile.children_ages?.join(", ") || "",
         household_notes: parentProfile.household_notes || "",
         bio: "",
@@ -48,8 +48,8 @@ const Profile = () => {
         full_name: babysitterProfile.full_name || "",
         email: user?.email || "",
         address: "",
-        city: babysitterProfile.service_areas?.[0] || "",
-        neighborhood: "",
+        city: babysitterProfile.city?.name || "",
+        neighborhood: babysitterProfile.neighborhood?.name || "",
         children_ages: "",
         household_notes: "",
         bio: babysitterProfile.bio || "",
@@ -61,13 +61,63 @@ const Profile = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // TODO: Call real update API when backend supports it
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast({
-      title: "הפרופיל עודכן",
-      description: "הפרטים נשמרו בהצלחה",
-    });
+    try {
+      if (isParent && parentProfile) {
+        const result = await parentsApi.update(parentProfile.id, {
+          fullName: formData.full_name,
+          email: formData.email,
+          address: formData.address,
+          householdNotes: formData.household_notes,
+          childrenAges: formData.children_ages.split(',').map(age => parseInt(age.trim())).filter(age => !isNaN(age)),
+        });
+        
+        if (result.success) {
+          await refreshProfile();
+          toast({
+            title: "הפרופיל עודכן",
+            description: "הפרטים נשמרו בהצלחה",
+          });
+        } else {
+          toast({
+            title: "שגיאה",
+            description: result.error || "לא הצלחנו לעדכן את הפרופיל",
+            variant: "destructive",
+          });
+        }
+      } else if (!isParent && babysitterProfile) {
+        const result = await babysittersApi.update(babysitterProfile.id, {
+          fullName: formData.full_name,
+          email: formData.email,
+          bio: formData.bio,
+        });
+        
+        if (result.success) {
+          await refreshProfile();
+          toast({
+            title: "הפרופיל עודכן",
+            description: "הפרטים נשמרו בהצלחה",
+          });
+        } else {
+          toast({
+            title: "שגיאה",
+            description: result.error || "לא הצלחנו לעדכן את הפרופיל",
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "שגיאה",
+          description: "לא נמצא פרופיל לעדכון",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "שגיאה",
+        description: "אירעה שגיאה בעדכון הפרופיל",
+        variant: "destructive",
+      });
+    }
     
     setIsLoading(false);
   };

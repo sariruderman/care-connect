@@ -13,6 +13,7 @@ export interface User {
   email?: string;
   roles: string[];
   status: UserStatus;
+  trialEndsAt?: string;
   created_at: string;
   updated_at: string;
 }
@@ -41,6 +42,7 @@ export const SUPPORTED_LANGUAGES: { value: Language; label: string }[] = [
 
 // Parent Profile
 export interface ParentProfile {
+  id: string;
   user_id: string;
   full_name: string;
   address: string;
@@ -69,6 +71,7 @@ export interface Guardian {
 export type ApprovalMode = 'AUTO_APPROVE' | 'APPROVE_EACH_REQUEST' | 'APPROVE_NEW_FAMILIES';
 
 export interface BabysitterProfile {
+  id: string;
   user_id: string;
   full_name: string;
   age: number;
@@ -107,18 +110,24 @@ export type RequestStatus =
 export interface Request {
   id: string;
   parent_id: string;
+  parentId?: string;
   datetime_start: string;
+  datetimeStart?: string;
   datetime_end: string;
+  datetimeEnd?: string;
   area: string;
   address?: string;
   children_ages: number[];
+  childrenAges?: number[];
   requirements?: string;
   min_babysitter_age?: number;
   max_babysitter_age?: number;
   community_style_id?: string;
   status: RequestStatus;
   created_at: string;
+  createdAt?: string;
   updated_at: string;
+  updatedAt?: string;
 }
 
 // Request Candidate - Matched babysitters for a request

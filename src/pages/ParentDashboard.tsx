@@ -23,6 +23,13 @@ const ParentDashboard: React.FC = () => {
   const { user, parentProfile, logout } = useAuth();
   const { toast } = useToast();
   
+  // Redirect if no profile
+  useEffect(() => {
+    if (!user) {
+      navigate('/register/parent');
+    }
+  }, [user, navigate]);
+  
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [requests, setRequests] = useState<Request[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -74,7 +81,17 @@ const ParentDashboard: React.FC = () => {
   const handleCreateRequest = async (data: CreateRequestData) => {
     setIsLoading(true);
     
-    const result = await requestsApi.create(data);
+    if (!parentProfile?.id) {
+      toast({
+        title: 'שגיאה',
+        description: 'לא נמצא פרופיל הורה',
+        variant: 'destructive',
+      });
+      setIsLoading(false);
+      return;
+    }
+    
+    const result = await requestsApi.create({ ...data, parentId: parentProfile.id });
     
     if (result.success && result.data) {
       toast({
@@ -291,18 +308,18 @@ const ParentDashboard: React.FC = () => {
               <CardContent className="space-y-2">
                 <p>
                   <strong>תאריך:</strong>{' '}
-                  {format(new Date(selectedRequest.datetime_start), 'EEEE, d בMMMM yyyy', { locale: he })}
+                  {format(new Date(selectedRequest.datetimeStart || selectedRequest.datetime_start), 'EEEE, d בMMMM yyyy', { locale: he })}
                 </p>
                 <p>
                   <strong>שעות:</strong>{' '}
-                  {format(new Date(selectedRequest.datetime_start), 'HH:mm')} -{' '}
-                  {format(new Date(selectedRequest.datetime_end), 'HH:mm')}
+                  {format(new Date(selectedRequest.datetimeStart || selectedRequest.datetime_start), 'HH:mm')} -{' '}
+                  {format(new Date(selectedRequest.datetimeEnd || selectedRequest.datetime_end), 'HH:mm')}
                 </p>
                 <p>
                   <strong>אזור:</strong> {selectedRequest.area}
                 </p>
                 <p>
-                  <strong>ילדים:</strong> גילאי {selectedRequest.children_ages.join(', ')}
+                  <strong>ילדים:</strong> גילאי {(selectedRequest.childrenAges || selectedRequest.children_ages || []).join(', ')}
                 </p>
               </CardContent>
             </Card>
@@ -325,13 +342,15 @@ const ParentDashboard: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {candidates.length === 0 ? (
+                {availableCandidates.length === 0 ? (
                   <div className="text-center py-8">
                     <RefreshCw className="h-8 w-8 mx-auto text-muted-foreground animate-spin mb-4" />
-                    <p className="text-muted-foreground">מחפשים מועמדות מתאימות...</p>
+                    <p className="text-muted-foreground">
+                      {candidates.length === 0 ? 'מחפשים מועמדות מתאימות...' : 'ממתינים לתשובות מהמועמדות...'}
+                    </p>
                   </div>
                 ) : (
-                  candidates.map(candidate => (
+                  availableCandidates.map(candidate => (
                     <CandidateCard
                       key={candidate.id}
                       candidate={candidate}

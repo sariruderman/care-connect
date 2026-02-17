@@ -24,6 +24,28 @@ export class BookingsService {
     return this.prisma.booking.findMany();
   }
 
+  async findByParent(parentId: string) {
+    return this.prisma.booking.findMany({
+      where: { parentId },
+      include: {
+        babysitter: true,
+        request: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async findByBabysitter(babysitterId: string) {
+    return this.prisma.booking.findMany({
+      where: { babysitterId },
+      include: {
+        parent: true,
+        request: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findOne(id: string) {
     const booking = await this.prisma.booking.findUnique({ where: { id } });
     if (!booking) throw new NotFoundException('Booking not found');

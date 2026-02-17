@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, Body, Patch, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Patch, Delete, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
@@ -20,7 +20,13 @@ export class BookingsController {
   }
 
   @Get()
-  async findAll() {
+  async findAll(@Query('parentId') parentId?: string, @Query('babysitterId') babysitterId?: string) {
+    if (parentId) {
+      return await this.bookingsService.findByParent(parentId);
+    }
+    if (babysitterId) {
+      return await this.bookingsService.findByBabysitter(babysitterId);
+    }
     return await this.bookingsService.findAll();
   }
 

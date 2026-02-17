@@ -75,10 +75,14 @@ async verifyOtp(phone: string, code: string) {
 // }
   
    if (!user) {
+    const trialEndsAt = new Date();
+    trialEndsAt.setMonth(trialEndsAt.getMonth() + 1); // 30 days free trial
+    
     user = await this.prisma.user.create({
       data: {
         phone,
         isVerified: true,
+        trialEndsAt,
       },
     });
   }
@@ -93,5 +97,23 @@ async verifyOtp(phone: string, code: string) {
   
   return { success: true, data: { token, user: { ...user, roles } } };
 }
- 
+
+  async getCurrentUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId: user.id },
+      select: { role: true },
+    });
+
+    const roles = userRoles.map((r) => r.role);
+
+    return { success: true, data: { ...user, roles } };
+  }
 }

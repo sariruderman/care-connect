@@ -24,10 +24,13 @@ const ProtectedRoute = ({ children, allowedTypes }: ProtectedRouteProps) => {
     return <Navigate to="/" state={{ from: location }} replace />;
   }
 
-  if (allowedTypes && user && !allowedTypes.includes(user.roles[0] as UserType)) {
-    // Redirect to appropriate dashboard based on user type
-    const redirectPath = user.roles[0] === "BABYSITTER" ? "/babysitter/dashboard" : "/parent/dashboard";
-    return <Navigate to={redirectPath} replace />;
+  if (allowedTypes && user) {
+    const hasAllowedRole = user.roles?.some(role => allowedTypes.includes(role as UserType));
+    if (!hasAllowedRole) {
+      // Redirect to appropriate dashboard based on user type
+      const redirectPath = user.roles?.includes('BABYSITTER') ? "/babysitter/dashboard" : "/parent/dashboard";
+      return <Navigate to={redirectPath} replace />;
+    }
   }
 
   return <>{children}</>;

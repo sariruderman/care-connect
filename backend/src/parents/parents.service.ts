@@ -12,8 +12,17 @@ export class ParentsService {
       where: { phone: data.phone },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Phone number already registered');
+    if (!existingUser) {
+      throw new ConflictException('User not found. Please verify OTP first.');
+    }
+
+    const existingProfile = await this.prisma.parentProfile.findUnique({
+      where: { userId: existingUser.id },
+    });
+
+    if (existingProfile) {
+      // Profile already exists, return it instead of throwing error
+      return { success: true, data: { user: existingUser, profile: existingProfile } };
     }
 
     let city = await this.prisma.city.findUnique({ where: { name: data.city } });
@@ -31,23 +40,30 @@ export class ParentsService {
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          phone: data.phone,
-          email: data.email,
-          isVerified: true,
-        },
+      await tx.user.update({
+        where: { id: existingUser.id },
+        data: { email: data.email },
       });
 
-      await tx.userRole.create({
-        data: {
-          userId: user.id,
+      // Check if role already exists
+      const existingRole = await tx.userRole.findFirst({
+        where: {
+          userId: existingUser.id,
           role: 'PARENT',
         },
       });
 
+      if (!existingRole) {
+        await tx.userRole.create({
+          data: {
+            userId: existingUser.id,
+            role: 'PARENT',
+          },
+        });
+      }
+
       const profileData: any = {
-        userId: user.id,
+        userId: existingUser.id,
         fullName: data.fullName,
         address: data.address,
         cityId: city.id,
@@ -68,7 +84,7 @@ export class ParentsService {
         data: profileData,
       });
 
-      return { user, profile };
+      return { user: existingUser, profile };
     });
 
     return { success: true, data: result };
@@ -136,15 +152,19 @@ export class ParentsService {
     return parent;
   }
 
-  async update(id: string, data: Partial<CreateParentDto> & { cityId?: string; neighborhoodId?: string }) {
-    const { cityId, neighborhoodId, ...rest } = data;
-    const updateData: any = { ...rest };
-    if (cityId) {
-      updateData.city = { connect: { id: cityId } };
-    }
-    if (neighborhoodId) {
-      updateData.neighborhood = { connect: { id: neighborhoodId } };
-    }
+  async update(id: string, data: Partial<CreateParentDto> & { cityId?: string; neighborhoodId?: string; communityStyleId?: string }) {
+    const updateData: any = {};
+
+    if (data.fullName) updateData.fullName = data.fullName;
+    if (data.address) updateData.address = data.address;
+    if (data.childrenAges) updateData.childrenAges = data.childrenAges;
+    if (data.householdNotes !== undefined) updateData.householdNotes = data.householdNotes;
+    if (data.languages) updateData.languages = data.languages;
+
+    if (data.cityId) updateData.city = { connect: { id: data.cityId } };
+    if (data.neighborhoodId) updateData.neighborhood = { connect: { id: data.neighborhoodId } };
+    if (data.communityStyleId) updateData.communityStyle = { connect: { id: data.communityStyleId } };
+
     return this.prisma.parentProfile.update({
       where: { id },
       data: updateData,

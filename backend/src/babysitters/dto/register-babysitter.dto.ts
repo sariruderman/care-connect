@@ -1,5 +1,6 @@
-import { IsString, IsInt, IsArray, IsOptional, IsBoolean, IsNotEmpty, IsEmail } from 'class-validator';
+import { IsString, IsInt, IsArray, IsOptional, IsBoolean, IsNotEmpty, IsEmail, Min, Max } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class RegisterBabysitterDto {
   @ApiProperty({ example: '+972501234567' })
@@ -8,7 +9,7 @@ export class RegisterBabysitterDto {
   phone!: string;
 
   @ApiProperty({ example: 'babysitter@email.com', required: false })
-  @IsEmail()
+  @IsEmail({}, { message: 'Invalid email format' })
   @IsOptional()
   email?: string;
 
@@ -18,7 +19,10 @@ export class RegisterBabysitterDto {
   fullName!: string;
 
   @ApiProperty({ example: 17 })
+  @Type(() => Number)
   @IsInt()
+  @Min(14)
+  @Max(100)
   age!: number;
 
   @ApiProperty({ example: 'בני ברק' })
@@ -32,7 +36,9 @@ export class RegisterBabysitterDto {
   neighborhood!: string;
 
   @ApiProperty({ example: 15 })
+  @Type(() => Number)
   @IsInt()
+  @Min(1)
   walkingRadiusMinutes!: number;
 
   @ApiProperty({ type: [String], example: ['שיכון ה', 'רמת אלחנן'] })
@@ -40,7 +46,9 @@ export class RegisterBabysitterDto {
   serviceAreas!: string[];
 
   @ApiProperty({ example: 2 })
+  @Type(() => Number)
   @IsInt()
+  @Min(0)
   experienceYears!: number;
 
   @ApiProperty({ required: false })
@@ -57,6 +65,16 @@ export class RegisterBabysitterDto {
   @IsBoolean()
   @IsOptional()
   hasGuardian?: boolean;
+
+  @ApiProperty({ example: '+972501234567', required: false })
+  @IsString()
+  @IsOptional()
+  guardianPhone?: string;
+
+  @ApiProperty({ example: 'שם ההורה', required: false })
+  @IsString()
+  @IsOptional()
+  guardianName?: string;
 
   @ApiProperty({ example: 'APPROVE_EACH_REQUEST', required: false })
   @IsString()

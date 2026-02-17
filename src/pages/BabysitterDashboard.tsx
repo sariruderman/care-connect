@@ -32,11 +32,11 @@ const BabysitterDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const loadData = useCallback(async () => {
-    if (!user) return;
+    if (!babysitterProfile?.id) return;
     
     setIsRefreshing(true);
     
-    const pendingResult = await babysitterRequestsApi.getPendingRequests(user.id);
+    const pendingResult = await babysitterRequestsApi.getPendingRequests(babysitterProfile.id);
     if (pendingResult.success && pendingResult.data) {
       // Map candidates to PendingRequest format
       // The backend should return candidates with their associated request
@@ -47,13 +47,13 @@ const BabysitterDashboard: React.FC = () => {
       setPendingRequests(requestsWithDetails);
     }
     
-    const bookingsResult = await bookingsApi.getBabysitterBookings(user.id);
+    const bookingsResult = await bookingsApi.getBabysitterBookings(babysitterProfile.id);
     if (bookingsResult.success && bookingsResult.data) {
       setBookings(bookingsResult.data);
     }
     
     setIsRefreshing(false);
-  }, [user]);
+  }, [babysitterProfile]);
 
   useEffect(() => {
     loadData();
@@ -160,6 +160,20 @@ const BabysitterDashboard: React.FC = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
+        {/* Trial Period Banner */}
+        {user?.trialEndsAt && new Date(user.trialEndsAt) > new Date() && (
+          <Card className="border-primary bg-primary/5">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                <p className="text-sm">
+                  <strong>תקופת ניסיון חינם!</strong> השירות חינם עד {format(new Date(user.trialEndsAt), 'd בMMMM yyyy', { locale: he })}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         {/* Pending Requests Alert */}
         {pendingRequests.length > 0 && (
           <Card className="border-primary bg-primary/5">
@@ -226,7 +240,17 @@ const BabysitterDashboard: React.FC = () => {
                 </CardContent>
               </Card>
             ) : (
-              pendingRequests.map(({ candidate, request }) => (
+              pendingRequests.map(({ candidate, request }) => {
+                const startDate = new Date(request.datetimeStart || request.datetime_start);
+                const endDate = new Date(request.datetimeEnd || request.datetime_end);
+                const childrenAges = request.childrenAges || request.children_ages || [];
+                
+                // Skip if invalid dates
+                if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                  return null;
+                }
+                
+                return (
                 <Card key={candidate.id} className="border-primary/30">
                   <CardContent className="p-4 space-y-4">
                     {/* Request Details */}
@@ -234,14 +258,14 @@ const BabysitterDashboard: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4 text-primary" />
                         <span className="font-medium">
-                          {format(new Date(request.datetime_start), 'EEEE, d בMMMM', { locale: he })}
+                          {format(startDate, 'EEEE, d בMMMM', { locale: he })}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Clock className="h-4 w-4" />
                         <span>
-                          {format(new Date(request.datetime_start), 'HH:mm')} -{' '}
-                          {format(new Date(request.datetime_end), 'HH:mm')}
+                          {format(startDate, 'HH:mm')} -{' '}
+                          {format(endDate, 'HH:mm')}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -251,7 +275,7 @@ const BabysitterDashboard: React.FC = () => {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Baby className="h-4 w-4" />
                         <span>
-                          {request.children_ages.length} ילדים (גילאי {request.children_ages.join(', ')})
+                          {childrenAges.length} ילדים (גילאי {childrenAges.join(', ')})
                         </span>
                       </div>
                       {request.requirements && (
@@ -287,7 +311,8 @@ const BabysitterDashboard: React.FC = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))
+              );
+            }).filter(Boolean)
             )}
           </TabsContent>
 

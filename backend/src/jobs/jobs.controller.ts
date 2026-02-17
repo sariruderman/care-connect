@@ -13,7 +13,7 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   @Post()
-  async create(@Body() dto: CreateJobRequest) {
+  async create(@Body() dto: CreateJobDto) {
     return await this.jobsService.create(dto);
   }
 
@@ -27,8 +27,13 @@ export class JobsController {
     return await this.jobsService.findOne(id);
   }
 
+  @Get(':id/candidates')
+  async getCandidates(@Param('id') id: string) {
+    return await this.jobsService.getCandidates(id);
+  }
+
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: Partial<CreateJobDto> & { parentId?: string }) {
+  async update(@Param('id') id: string, @Body() dto: Partial<CreateJobDto>) {
     return await this.jobsService.update(id, dto);
   }
 

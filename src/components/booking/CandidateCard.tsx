@@ -92,8 +92,8 @@ const CandidateCard: React.FC<CandidateCardProps> = ({
             {/* Areas */}
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <MapPin className="h-4 w-4" />
-              {babysitter.service_areas.slice(0, 3).join(', ')}
-              {babysitter.service_areas.length > 3 && ` +${babysitter.service_areas.length - 3}`}
+              {(babysitter.service_areas || []).slice(0, 3).join(', ')}
+              {(babysitter.service_areas || []).length > 3 && ` +${(babysitter.service_areas || []).length - 3}`}
             </div>
 
             {/* Experience */}

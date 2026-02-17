@@ -19,6 +19,11 @@ export class CityController {
     return this.cityService.findAll();
   }
 
+  @Get(':id/neighborhoods')
+  async getNeighborhoods(@Param('id') id: string) {
+    return this.cityService.getNeighborhoods(id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<City> {
     return this.cityService.findOne(id);

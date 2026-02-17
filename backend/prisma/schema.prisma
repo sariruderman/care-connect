@@ -75,6 +75,7 @@ model User {
   email      String?
   isVerified Boolean    @default(false) @map("is_verified")
   status     UserStatus @default(PENDING)
+  trialEndsAt DateTime?  @map("trial_ends_at")
   createdAt  DateTime   @default(now()) @map("created_at")
   updatedAt  DateTime   @updatedAt @map("updated_at")
 

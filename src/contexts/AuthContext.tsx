@@ -117,7 +117,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (result.success && result.data) {
         setParentProfile(result.data);
       }
-    } else if (user.roles.includes('BABYSITTER')) {
+    }
+    
+    if (user.roles.includes('BABYSITTER')) {
       const result = await babysittersApi.getByUserId(user.id);
       if (result.success && result.data) {
         setBabysitterProfile(result.data);

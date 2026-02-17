@@ -9,7 +9,8 @@ import { BabysittersModule } from './babysitters/babysitters.module';
 import { ParentsModule } from './parents/parents.module';
 import { CommunityStylesModule } from './community-styles/community-styles.module';
 import { CityModule } from './city/city.module';
-// ... ניתן להוסיף כאן את שאר המודולים (parents, babysitters, וכו')
+import { JobsModule } from './jobs/jobs.module';
+import { BookingsModule } from './bookings/bookings.module';
 
 @Module({
   imports: [
@@ -21,8 +22,9 @@ import { CityModule } from './city/city.module';
     BabysittersModule,
     GuardiansModule,
     CommunityStylesModule,
-    CityModule
-    // ... שאר המודולים
+    CityModule,
+    JobsModule,
+    BookingsModule,
   ],
 })
 export class AppModule implements NestModule {

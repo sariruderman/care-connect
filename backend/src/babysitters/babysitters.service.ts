@@ -13,8 +13,16 @@ export class BabysittersService {
       where: { phone: data.phone },
     });
 
-    if (existingUser) {
-      throw new ConflictException('Phone number already registered');
+    if (!existingUser) {
+      throw new ConflictException('User not found. Please verify OTP first.');
+    }
+
+    const existingProfile = await this.prisma.babysitterProfile.findUnique({
+      where: { userId: existingUser.id },
+    });
+
+    if (existingProfile) {
+      throw new ConflictException('Babysitter profile already exists');
     }
 
     let city = await this.prisma.city.findUnique({ where: { name: data.city } });
@@ -32,24 +40,21 @@ export class BabysittersService {
     }
 
     const result = await this.prisma.$transaction(async (tx) => {
-      const user = await tx.user.create({
-        data: {
-          phone: data.phone,
-          email: data.email,
-          isVerified: true,
-        },
+      await tx.user.update({
+        where: { id: existingUser.id },
+        data: { email: data.email },
       });
 
       await tx.userRole.create({
         data: {
-          userId: user.id,
+          userId: existingUser.id,
           role: 'BABYSITTER',
         },
       });
 
       const profile = await tx.babysitterProfile.create({
         data: {
-          userId: user.id,
+          userId: existingUser.id,
           fullName: data.fullName,
           age: data.age,
           cityId: city.id,
@@ -57,7 +62,7 @@ export class BabysittersService {
           walkingRadiusMinutes: data.walkingRadiusMinutes,
           serviceAreas: data.serviceAreas,
           experienceYears: data.experienceYears,
-          communityStyleId: data.communityStyleId,
+          communityStyleId: data.communityStyleId || null,
           bio: data.bio,
           guardianRequiredApproval: data.hasGuardian || false,
           approvalMode: (data.approvalMode as ApprovalMode) || ApprovalMode.APPROVE_EACH_REQUEST,
@@ -65,7 +70,7 @@ export class BabysittersService {
         },
       });
 
-      return { user, profile };
+      return { user: existingUser, profile };
     });
 
     return { success: true, data: result };
@@ -150,5 +155,54 @@ export class BabysittersService {
   async remove(id: string) {
     await this.prisma.babysitterProfile.delete({ where: { id } });
     return { success: true };
+  }
+
+  async getPendingRequests(babysitterId: string) {
+    return this.prisma.requestCandidate.findMany({
+      where: {
+        babysitterId,
+        response: 'PENDING',
+      },
+      include: {
+        request: {
+          include: {
+            parent: true,
+          },
+        },
+        babysitter: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async acceptRequest(candidateId: string) {
+    const candidate = await this.prisma.requestCandidate.findUnique({
+      where: { id: candidateId },
+      include: { babysitter: true },
+    });
+
+    if (!candidate) throw new NotFoundException('Candidate not found');
+
+    const response = candidate.babysitter.guardianRequiredApproval
+      ? 'GUARDIAN_PENDING'
+      : 'INTERESTED';
+
+    return this.prisma.requestCandidate.update({
+      where: { id: candidateId },
+      data: {
+        response,
+        babysitterRespondedAt: new Date(),
+      },
+    });
+  }
+
+  async declineRequest(candidateId: string) {
+    return this.prisma.requestCandidate.update({
+      where: { id: candidateId },
+      data: {
+        response: 'DECLINED',
+        babysitterRespondedAt: new Date(),
+      },
+    });
   }
 }

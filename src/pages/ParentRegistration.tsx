@@ -80,23 +80,30 @@ const ParentRegistration: React.FC = () => {
   const handleOtpVerify = async (code: string) => {
     const result = await verifyOtp(phone, code);
     
-    if (result.success) {
-      setStep('profile');
+    if (!result.success) {
+      return result;
     }
-       if (user?.roles?.includes('PARENT')) {
-      const profileResult = await parentsApi.getByUserId(user.id);
-      if (profileResult.success && profileResult.data) {
-        // יש פרופיל - לך ל-dashboard
-        navigate('/parent/dashboard');
-        return result;
+
+    // Get the user ID from the result
+    const userId = result.data?.user?.id;
+    if (userId) {
+      // Check if user already has a parent profile
+      try {
+        const profileResult = await parentsApi.getByUserId(userId);
+        if (profileResult.success && profileResult.data) {
+          setParentProfile(profileResult.data);
+          navigate('/parent/dashboard');
+          return result;
+        }
+      } catch (error) {
+        // Profile doesn't exist (404), continue to registration
+        console.log('No existing profile, continuing to registration');
       }
     }
-    // אין פרופיל - המשך למילוי פרטים
+    
     setStep('profile');
-  
-  
-  return result;
-};
+    return result;
+  };
 
   const handleResendOtp = async () => {
     await sendOtp(phone);
@@ -132,6 +139,17 @@ const ParentRegistration: React.FC = () => {
     if (result.success && result.data) {
       setParentProfile(result.data.profile);
       navigate('/parent/dashboard');
+    } else if (result.error?.includes('already exists') || result.error?.includes('409')) {
+      // Profile already exists, try to fetch it
+      try {
+        const profileResult = await parentsApi.getByUserId(user?.id || '');
+        if (profileResult.success && profileResult.data) {
+          setParentProfile(profileResult.data);
+          navigate('/parent/dashboard');
+        }
+      } catch (error) {
+        console.error('Failed to fetch existing profile:', error);
+      }
     }
 
     setIsLoading(false);

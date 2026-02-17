@@ -1,6 +1,7 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -17,5 +18,13 @@ export class AuthController {
   @ApiOperation({ summary: 'Verify OTP and get JWT token' })
   async verifyOtp(@Body() body: { phone: string; code: string }) {
     return this.authService.verifyOtp(body.phone, body.code);
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user' })
+  async getCurrentUser(@Request() req: any) {
+    return this.authService.getCurrentUser(req.user.userId);
   }
 }

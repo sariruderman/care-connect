@@ -19,4 +19,11 @@ export class CityService {
     if (!city) throw new NotFoundException('City not found');
     return city;
   }
+
+  async getNeighborhoods(cityId: string) {
+    return this.prisma.neighborhood.findMany({
+      where: { cityId },
+      orderBy: { name: 'asc' },
+    });
+  }
 }

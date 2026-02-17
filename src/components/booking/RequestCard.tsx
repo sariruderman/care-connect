@@ -43,8 +43,15 @@ const RequestCard: React.FC<RequestCardProps> = ({
   onCancel,
   showActions = true,
 }) => {
-  const startDate = new Date(request.datetime_start);
-  const endDate = new Date(request.datetime_end);
+  const startDate = new Date(request.datetimeStart || request.datetime_start);
+  const endDate = new Date(request.datetimeEnd || request.datetime_end);
+  const childrenAges = request.childrenAges || request.children_ages || [];
+  
+  // Validate dates
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return null; // Skip rendering invalid dates
+  }
+  
   const statusInfo = getStatusLabel(request.status);
   const isPast = endDate < new Date();
   const canCancel = !['CONFIRMED', 'COMPLETED', 'CANCELLED'].includes(request.status);
@@ -80,7 +87,7 @@ const RequestCard: React.FC<RequestCardProps> = ({
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Baby className="h-4 w-4" />
               <span>
-                {request.children_ages.length} ילדים (גילאי {request.children_ages.join(', ')})
+                {childrenAges.length} ילדים (גילאי {childrenAges.join(', ')})
               </span>
             </div>
           </div>

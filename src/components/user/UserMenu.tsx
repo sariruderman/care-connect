@@ -44,7 +44,9 @@ const UserMenu = () => {
   };
 
   const getDashboardPath = () => {
-    return user?.type === "BABYSITTER" ? "/babysitter/dashboard" : "/parent/dashboard";
+    if (babysitterProfile) return "/babysitter/dashboard";
+    if (parentProfile) return "/parent/dashboard";
+    return "/";
   };
 
   // Guest State
