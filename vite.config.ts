@@ -15,7 +15,8 @@ export default defineConfig(({ mode }) => ({
   preview: {
     allowedHosts: [
       'care-connect-i1oa.onrender.com' // הוספת ה-host של Render
-    ]
+    ],
+    fallback: 'index.html'
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
